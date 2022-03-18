@@ -1,116 +1,106 @@
 #include "pipex.h"
+#include <stdbool.h>
 #include <string.h>
 #include <unistd.h>
 
-char	*get_environment_path(char *envp[]);
-char	**get_path_vector(char *path);
-char	*get_full_path(char *command, char *environment_path);
-char	*get_executable_path(char *command, char **path_vec);
-void	destruct_state(char **path_vec, char *executable_path);
+typedef struct s_command {
+	char	**cmd1;
+	char	**cmd2;
+	char	**envp;
+	bool	is_error;
+}	t_command;
+
+int			pipeline(char *argv1[], char *argv2[], char *envp[], pid_t pids[]);
+void		put_error(char *err_msg);
+t_command	parse_command(char *cmd1, char *cmd2, char *envp[]);
 
 int	main(int argc, char *argv[], char *envp[])
 {
-	char	**path_vec;
-	char	*executable_path;
-	char	*cmd_argv[2];
-	int		status;
-	pid_t	pid;
+	pid_t		pids[2];
+	t_command	cmd;
 
-	if (argc < 5 || ft_strlen(argv[1]) == 0)
+	if (argc < 5 || ft_strlen(argv[2]) == 0 || ft_strlen(argv[3]) == 0)
+	{
+		put_error("Usage: pipex file1 cmd1 cmd2 file2");
 		return (EXIT_FAILURE);
-	cmd_argv[0] = argv[1];
-	cmd_argv[1] = NULL;
-	path_vec = get_path_vector(get_environment_path(envp));
-	printf("argv[1]: %s\n", argv[1]);
-	executable_path = get_executable_path(argv[1], path_vec);
-	printf("executable_path: %s\n\n", executable_path);
-	pid = fork();
-	if (pid == -1)
-	{
-		destruct_state(path_vec, executable_path);
-		exit(EXIT_FAILURE);
 	}
-	if (pid == 0)
-	{
-		execve(executable_path, cmd_argv, envp);
-		destruct_state(path_vec, executable_path);
-		exit(EXIT_SUCCESS);
-	}
-	else
-	{
-		wait(&status);
-		printf("\nchild process exited with status: %d\n\n", WEXITSTATUS(status));
-		destruct_state(path_vec, executable_path);
-		system("leaks pipex");
-		exit(EXIT_SUCCESS);
-	}
+	cmd = parse_command(argv[2], argv[3], envp);
+	pipeline(cmd.cmd1, cmd.cmd2, envp, pids);
+	waitpid(pids[0], NULL, 0);
+	waitpid(pids[1], NULL, 0);
+	free_split(cmd.cmd1);
+	free_split(cmd.cmd2);
+	system("leaks pipex");
 }
 
-void	destruct_state(char **path_vec, char *executable_path)
+t_command	parse_command(char *cmd1, char *cmd2, char *envp[])
 {
-	size_t	i;
+	t_command	command;
 
-	i = 0;
-	while (path_vec[i] != NULL)
+	command.cmd1 = ft_split(cmd1, ' ');
+	if (command.cmd1 == NULL)
 	{
-		free(path_vec[i]);
-		i++;
+		command.is_error = true;
+		return (command);
 	}
-	free(path_vec);
-	free(executable_path);
-}
-
-char	*get_executable_path(char *command, char **path_vec)
-{
-	char	*executable_path;
-	char	*full_path;
-
-	executable_path = NULL;
-	while (*path_vec != NULL)
+	command.cmd2 = ft_split(cmd2, ' ');
+	if (command.cmd2 == NULL)
 	{
-		full_path = get_full_path(command, *path_vec);
-		if (access(full_path, F_OK) == 0)
-			executable_path = full_path;
-		else
-			free(full_path);
-		path_vec++;
+		free_split(command.cmd1);
+		command.is_error = true;
+		return (command);
 	}
-	return (executable_path);
+	command.envp = envp;
+	command.is_error = false;
+	return (command);
 }
 
-char	*get_full_path(char *command, char *environment_path)
+void	put_error(char *err_msg)
 {
-	char	*full_path;
-	char	*tmp;
-
-	tmp = ft_strjoin(environment_path, "/");
-	if (tmp == NULL)
-		return (NULL);
-	full_path = ft_strjoin(tmp, command);
-	free(tmp);
-	return (full_path);
+	perror("pipex");
+	write(2, err_msg, ft_strlen(err_msg));
+	write(2, "\n", 1);
 }
 
-char	**get_path_vector(char *path)
+int	pipeline(char *argv1[], char *argv2[], char *envp[], pid_t pids[])
 {
-	char	**path_vec;
-	char	*trimmed_path;
+	int		fds[2];
 
-	trimmed_path = ft_strtrim(path, "PATH=");
-	if (trimmed_path == NULL)
-		return (NULL);
-	path_vec = ft_split(trimmed_path, ':');
-	free(trimmed_path);
-	return (path_vec);
-}
-
-char	*get_environment_path(char *envp[])
-{
-	while (*envp != NULL)
+	if (pipe(fds) == -1)
 	{
-		if (strnstr(*envp, "PATH", 4) != NULL)
-			return (*envp);
-		envp++;
+		perror("pipe: An error occured with creating the pipe");
+		return (EXIT_FAILURE);
 	}
-	return (NULL);
+	pids[0] = fork();
+	if (pids[0] == -1)
+	{
+		perror("fork: An error occured with fork");
+		return (EXIT_FAILURE);
+	}
+	if (pids[0] == 0)
+	{
+		close(fds[0]);
+		dup2(fds[1], STDOUT_FILENO);
+		close(fds[1]);
+		execve(get_executable_path(argv1[0], envp), argv1, envp);
+		perror("execve: An error occured with execve");
+		return (EXIT_FAILURE);
+	}
+	close(fds[1]);
+	pids[1] = fork();
+	if (pids[1] == -1)
+	{
+		perror("fork: An error occured with fork");
+		return (EXIT_FAILURE);
+	}
+	if (pids[1] == 0)
+	{
+		dup2(fds[0], STDIN_FILENO);
+		close(fds[0]);
+		execve(get_executable_path(argv2[0], envp), argv2, envp);
+		perror("execve: An error occured with execve");
+		return (EXIT_FAILURE);
+	}
+	close(fds[0]);
+	return (EXIT_SUCCESS);
 }

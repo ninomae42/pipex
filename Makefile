@@ -6,9 +6,12 @@ SRCS := ft_split.c \
 		ft_strjoin.c \
 		ft_strlcpy.c \
 		ft_strlen.c \
+		ft_strncmp.c \
+		ft_strnstr.c \
 		ft_strrchr.c \
 		ft_strtrim.c \
 		ft_substr.c \
+		path_utils.c \
 
 OBJS := $(SRCS:.c=.o)
 
