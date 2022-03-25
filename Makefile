@@ -11,7 +11,11 @@ SRCS := ft_split.c \
 		ft_strrchr.c \
 		ft_strtrim.c \
 		ft_substr.c \
+		ft_syscalls.c \
+		open_utils.c \
 		path_utils.c \
+		pipe_utils.c \
+		put_err.c \
 
 OBJS := $(SRCS:.c=.o)
 
@@ -22,8 +26,8 @@ RM := rm -f
 .c.o:
 	$(CC) $(CFLAGS) -c $< -o $(<:.c=.o)
 
-$(NAME): $(OBJS) pipex.c
-	$(CC) $(CFLAGS) -o $(NAME) pipex.c $(OBJS)
+$(NAME): $(OBJS) main.c
+	$(CC) $(CFLAGS) -o $(NAME) main.c $(OBJS)
 
 all: $(NAME)
 
@@ -36,6 +40,6 @@ fclean: clean
 re: fclean all
 
 t: all
-	./pipex file1.txt "/usr/bin/sort" "/usr/bin/wc -l" file2.txt
+	./pipex infile "sort" "cat" outfile
 
 .PHONY: all clean fclean re
