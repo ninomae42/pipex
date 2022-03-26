@@ -1,4 +1,5 @@
 #include "pipex.h"
+#include "libft.h"
 
 void	validate_argument(int argc)
 {

@@ -18,7 +18,7 @@ int	open_outfile(const char *outfile_name)
 	int	fd;
 
 	fd = open(outfile_name, O_RDWR | O_CREAT | O_CLOEXEC,
-			S_IRWXU | S_IRWXG | S_IRWXO);
+			S_IRUSR | S_IWUSR | S_IRGRP | S_IWGRP | S_IROTH | S_IWOTH);
 	if (fd == -1)
 	{
 		perror("Open");

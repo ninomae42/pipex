@@ -1,4 +1,5 @@
 #include "pipex.h"
+#include "libft.h"
 
 static char	**get_search_paths(char *envp[]);
 static char	*get_full_path(char *command, char *environment_path);
