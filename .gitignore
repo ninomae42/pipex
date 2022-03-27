@@ -8,3 +8,5 @@ infile
 outfile
 */libft.a
 libft.a
+.cache/
+compile_commands.json
