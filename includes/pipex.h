@@ -22,8 +22,8 @@ int		ft_pipe(int filedes[2]);
 
 // pipe_utils.c
 void	close_pipefds(int filedes[2]);
-void	pipe_setting_for_infile(char *infile_name, int pipe_fd[2]);
-void	pipe_setting_for_outfile(char *outfile_name, int pipe_fd[2]);
+void	pipe_setting_for_infile(int infile_fd, int pipe_fd[2]);
+void	pipe_setting_for_outfile(int outfile_fd, int pipe_fd[2]);
 
 // put_err.c
 void	ft_puterr(char *err_msg);

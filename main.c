@@ -30,8 +30,7 @@ void	exec_command(char *cmd, char **environ)
 	}
 }
 
-// 子プロセスの中でinfileとoutfileを開くと挙動が違うかも
-void	execute_command(int argc, char *argv[], char **environ)
+void	execute_command(char *argv[], char **environ, int io_files[])
 {
 	int		pipe_fd[2];
 	pid_t	pids[2];
@@ -40,14 +39,14 @@ void	execute_command(int argc, char *argv[], char **environ)
 	pids[0] = ft_fork();
 	if (pids[0] == 0)
 	{
-		pipe_setting_for_infile(argv[1], pipe_fd);
+		pipe_setting_for_infile(io_files[0], pipe_fd);
 		exec_command(argv[2], environ);
 	}
 	waitpid(pids[0], NULL, 0);
 	pids[1] = ft_fork();
 	if (pids[1] == 0)
 	{
-		pipe_setting_for_outfile(argv[argc - 1], pipe_fd);
+		pipe_setting_for_outfile(io_files[1], pipe_fd);
 		exec_command(argv[3], environ);
 	}
 	close_pipefds(pipe_fd);
@@ -61,6 +60,6 @@ int	main(int argc, char *argv[])
 
 	validate_argc(argc);
 	open_iofiles(io_files, argc, argv);
-	execute_command(argc, argv, environ);
+	execute_command(argv, environ, io_files);
 	return (EXIT_SUCCESS);
 }
