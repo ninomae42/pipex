@@ -1,7 +1,7 @@
 #include "pipex.h"
 #include "libft.h"
 
-void	validate_argument(int argc)
+void	validate_argc(int argc)
 {
 	if (argc - 1 < 4)
 	{
@@ -30,6 +30,7 @@ void	exec_command(char *cmd, char **environ)
 	}
 }
 
+// 子プロセスの中でinfileとoutfileを開くと挙動が違うかも
 void	execute_command(int argc, char *argv[], char **environ)
 {
 	int		pipe_fd[2];
@@ -56,9 +57,10 @@ void	execute_command(int argc, char *argv[], char **environ)
 int	main(int argc, char *argv[])
 {
 	extern char	**environ;
+	int			io_files[2];
 
-	validate_argument(argc);
+	validate_argc(argc);
+	open_iofiles(io_files, argc, argv);
 	execute_command(argc, argv, environ);
-	system("leaks pipex");
 	return (EXIT_SUCCESS);
 }
