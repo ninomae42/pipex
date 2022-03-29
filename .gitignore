@@ -1,12 +1,8 @@
 *.o
 a.out
 pipex
-cmd1/
-lab/
-.vscode/
 infile
 outfile
-*/libft.a
 libft.a
 .cache/
 compile_commands.json
