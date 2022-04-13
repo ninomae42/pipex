@@ -26,7 +26,7 @@ LIB := libft.a
 	$(CC) $(CFLAGS) -I $(INCDIR) -I $(INCDIR_LIBFT) -c $< -o $(<:.c=.o)
 
 $(NAME): $(LIB) $(OBJS) $(MAIN)
-	$(CC) $(CFLAGS) -I $(INCDIR) -I $(INCDIR_LIBFT) $(LIB) -o $(NAME) $(OBJS) $(MAIN)
+	$(CC) $(CFLAGS) -I $(INCDIR) -I $(INCDIR_LIBFT) -o $(NAME) $(OBJS) $(MAIN) $(LIB)
 
 $(LIB): $(LIBFT_DIR)
 	$(MAKE) -C ./libft/
